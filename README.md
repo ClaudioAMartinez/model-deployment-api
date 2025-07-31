@@ -3,9 +3,11 @@ This project is a functional Minimum Viable Product (MVP) for a model inference 
 
 The API allows users to upload pickled Python functions as "models" and then run inference by sending data to them.
 
+> A containerization enhancement will be implemented in a future PR
+
 ## Features
 - **Model Upload:** Upload Python model files (.pkl) to the service.
-- **List Models:** Get a list of all uploaded models.s
+- **List Models:** Get a list of all uploaded models.
 - **Direct Inference:** Run predictions by sending data to an uploaded model.
 
 ## Tech Stack
