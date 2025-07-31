@@ -1,23 +1,25 @@
 # Mock Model Deployment API
-This project is a functional Minimum Viable Product (MVP) for a model inference service. It's designed to showcase core API development skills using Python and FastAPI.
-
-The API allows users to upload pickled Python functions as "models" and then run inference by sending data to them.
-
-> A containerization enhancement will be implemented in a future PR
+This project is a simple simulation of an MLOps pipeline, designed to showcase skills in API development, containerization with Docker, state management, and testing. It's meant to demonstrate the infrastructure required to deploy machine learning models as independent, containerized services.
 
 ## Features
 - **Model Upload:** Upload Python model files (.pkl) to the service.
-- **List Models:** Get a list of all uploaded models.
-- **Direct Inference:** Run predictions by sending data to an uploaded model.
+- **Dynamic Deployment:** Deploy any uploaded model as its own containerized API endpoint.
+- **Health Checks:** The deployment process includes a health check to ensure containers are running successfully before reporting success.
+- **State Synchronization:** The API is self-healing, actively checking the status of running containers and updating its state.
+- **Inference:** Run predictions by sending data to deployed models.
+- **Lifecycle Management:** Tear down and clean up deployed model containers.
 
 ## Tech Stack
 - **Backend:** Python, FastAPI
-- **Libraries:** Pydantic, Uvicorn
+- **Containerization:** Docker
+- **Testing:** Pytest
+- **Libraries:** Pydantic, Uvicorn, HTTPX
 
 ## Setup and Installation
 ### Prerequisites:
 
 - Python 3.12+
+- Docker Desktop must be running.
 
 ### Steps:
 
@@ -70,7 +72,8 @@ curl -X POST -F "file=@is_even.pkl" http://127.0.0.1:8000/upload
 ```json
 {
   "model_id": "some-unique-uuid",
-  "filename": "is_even.pkl"
+  "filename": "is_even.pkl",
+  "deployed": false
 }
 ```
 
@@ -88,14 +91,31 @@ curl -X GET http://127.0.0.1:8000/models
 [
   {
     "model_id": "some-unique-uuid",
-    "filename": "is_even.pkl"
+    "filename": "is_even.pkl",
+    "deployed": false
   }
 ]
 ```
 
-**3. Run Inference**
+**3. Deploy a Model**
 
-Send data to an uploaded model for a prediction.
+Deploy an uploaded model. This will build and run a new Docker container. (This may take a minute)
+- **Endpoint:** `POST /deploy/{model_id}`
+- **Example** `curl`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/deploy/some-unique-uuid
+```
+- **Success Response:**
+```json
+{
+  "message": "Model deployed successfully",
+  "model_id": "some-unique-uuid"
+}
+```
+**4. Run Inference**
+
+Send data to a deployed model for a prediction.
 - **Endpoint:** `POST /infer/{model_id}`
 - **Example** `curl`:
 
@@ -108,4 +128,29 @@ curl -X POST -H "Content-Type: application/json" -d '{"input": 10}' http://127.0
   "model_id": "some-unique-uuid",
   "prediction": true
 }
+```
+**5. Tear down a Model**
+
+Stop and remove a deployed model's container.
+- **Endpoint:** `POST /teardown/{model_id}`
+- **Example** `curl`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/teardown/some-unique-uuid
+```
+- **Success Response:**
+```json
+{
+  "message": "Model taken down successfully",
+  "model_id": "some-unique-uuid"
+}
+```
+
+## Running the Tests
+The test suite includes integration tests that interact with the Docker engine.
+> Prerequisite: Docker Desktop must be running.
+
+To run the tests, execute the following command from the project's root directory:
+```bash
+pytest
 ```
